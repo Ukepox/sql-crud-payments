@@ -1,6 +1,6 @@
 # sql-crud-payments
 
-## Acerca de y como preparar la base de datos
+## Acerca de cómo preparar la base de datos y cómo ejecutar los procedimientos
 
 Los .sqls fueron desarrollados en Microsoft SQL Server, por lo que se recomienda correrlos en dicho sql flavor
 
