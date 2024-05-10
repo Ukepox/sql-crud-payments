@@ -10,4 +10,12 @@ BEGIN
     SET @sql = N'SELECT ' + @column_list + N' FROM ' + QUOTENAME(@table) + N'WHERE deleted = 0';
 
     EXEC sp_executesql @sql;
-END
+END;
+GO
+
+CREATE OR ALTER PROCEDURE read_logtable AS 
+BEGIN
+	SELECT *
+	FROM logtable
+END;
+GO

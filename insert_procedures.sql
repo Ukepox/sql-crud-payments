@@ -1,5 +1,4 @@
-CREATE OR ALTER PROCEDURE update_payment (
-	@id INT,
+CREATE OR ALTER PROCEDURE insert_payment (
 	@value FLOAT,
 	@city_name VARCHAR(100),
 	@payment_method_name VARCHAR(100),
@@ -27,7 +26,7 @@ BEGIN
 	)
 
 	-- GETTING USER ID --
-	--Values that are not found in the users table will be added to the users table
+	--Users that are not found in the users table will be added to the users table
 
 	--checking if the payment's user is already registered
 	IF @user NOT IN (
@@ -64,14 +63,21 @@ BEGIN
 		FROM short_descriptions
 		WHERE short_description = @short_description_name
 		)
-		UPDATE payments
-		SET value = @value, city_id = @city_id, payment_method_id = @payment_method_id, short_description_id = @short_description_id, user_id = @user_id
-		WHERE id = @id
+		INSERT INTO payments (value, city_id, payment_method_id, payment_time, short_description_id, user_id)
+		VALUES (@value, @city_id, @payment_method_id, GETDATE(), @short_description_id, @user_id)
+
+		DECLARE @payment_id INT
+		SET @payment_id = (
+			SELECT MAX(id)
+			FROM payments
+		)
+		INSERT INTO logtable (log_time, table_modified, modification_type, row_modified)
+		VALUES (GETDATE(), 'payments', 'INSERT', @payment_id)
 END;
 GO
 
 
-CREATE OR ALTER PROCEDURE update_city (@city_id INT, @city VARCHAR(100), @state_name VARCHAR(100)) AS
+CREATE OR ALTER PROCEDURE insert_city (@city VARCHAR(100), @state_name VARCHAR(100)) AS
 BEGIN
 	--Checking if @city is actually not found in the cities table (want to avoid duplicates)
 	IF @city NOT IN (
@@ -95,42 +101,106 @@ BEGIN
 			FROM states
 			WHERE country_state = @state_name
 		)
-		UPDATE cities
-		SET city = @city, state_id = @state_id
-		WHERE city_id = @city_id
+		INSERT INTO cities (city, state_id)
+		VALUES (@city, @state_id)
+
+		DECLARE @city_id INT
+		SET @city_id = (
+			SELECT city_id
+			FROM cities
+			WHERE city = @city
+		)
+		INSERT INTO logtable (log_time, table_modified, modification_type, row_modified)
+		VALUES (GETDATE(), 'cities', 'INSERT', @city_id)
 	END
 
 END;
 GO
 
-CREATE OR ALTER PROCEDURE update_state (@state_id INT, @country_state VARCHAR(100)) AS
+CREATE OR ALTER PROCEDURE insert_state (@country_state VARCHAR(100)) AS
 BEGIN
-	UPDATE states
-	SET country_state = @country_state
-	WHERE state_id = @state_id
+	IF @country_state NOT IN (
+		SELECT DISTINCT country_state
+		FROM states
+	)
+	BEGIN
+		INSERT INTO states (country_state)
+		VALUES (@country_state)
+
+		DECLARE @state_id INT
+		SET @state_id = (
+			SELECT state_id
+			FROM states
+			WHERE country_state = @country_state
+		)
+		INSERT INTO logtable (log_time, table_modified, modification_type, row_modified)
+		VALUES (GETDATE(), 'states', 'INSERT', @state_id)
+	END
 END;
 GO
 
-CREATE OR ALTER PROCEDURE update_payment_method (@payment_method_id INT, @payment_method VARCHAR(100)) AS
+CREATE OR ALTER PROCEDURE insert_payment_method (@payment_method VARCHAR(100)) AS
 BEGIN
-	UPDATE payment_methods
-	SET payment_method = @payment_method
-	WHERE payment_method_id = @payment_method_id
+	IF @payment_method NOT IN (
+		SELECT payment_method
+		FROM payment_methods
+	)
+	BEGIN
+		INSERT INTO payment_methods (payment_method)
+		VALUES (@payment_method)
+
+		DECLARE @payment_method_id INT
+		SET @payment_method_id = (
+			SELECT payment_method_id
+			FROM payment_methods
+			WHERE payment_method = @payment_method
+		)
+		INSERT INTO logtable (log_time, table_modified, modification_type, row_modified)
+		VALUES (GETDATE(), 'payment_methods', 'INSERT', @payment_method_id)
+	END
 END;
 GO
 
-CREATE OR ALTER PROCEDURE update_short_description (@short_description_id INT, @short_description VARCHAR(100)) AS
+CREATE OR ALTER PROCEDURE insert_short_description (@short_description VARCHAR(100)) AS
 BEGIN
-	UPDATE short_descriptions
-	SET short_description = @short_description
-	WHERE short_description_id = @short_description_id
+	IF @short_description NOT IN (
+		SELECT short_description
+		FROM short_descriptions
+	)
+	BEGIN
+		INSERT INTO short_descriptions (short_description)
+		VALUES (@short_description)
+		
+		DECLARE @short_description_id INT
+		SET @short_description_id = (
+			SELECT short_description_id
+			FROM short_descriptions
+			WHERE short_description = @short_description
+		)
+		INSERT INTO logtable (log_time, table_modified, modification_type, row_modified)
+		VALUES (GETDATE(), 'short_descriptions', 'INSERT', @short_description_id)
+	END
 END;
 GO
 
-CREATE OR ALTER PROCEDURE update_user (@user_id INT, @username varchar(100)) AS
+CREATE OR ALTER PROCEDURE insert_user (@username varchar(100)) AS
 BEGIN
-	UPDATE users
-	SET username = @username
-	WHERE user_id = @user_id
+	IF @username NOT IN (
+		SELECT username
+		FROM users
+	)
+	BEGIN
+		INSERT INTO users (username)
+		VALUES (@username)
+
+		DECLARE @user_id INT
+		SET @user_id = (
+			SELECT user_id
+			FROM users
+			WHERE username = @username
+		)
+		INSERT INTO logtable (log_time, table_modified, modification_type, row_modified)
+		VALUES (GETDATE(), 'users', 'INSERT', @user_id)
+	END
 END;
 GO

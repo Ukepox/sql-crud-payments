@@ -2,14 +2,13 @@ CREATE OR ALTER PROCEDURE update_payment (
 	@id INT,
 	@value FLOAT,
 	@city_name VARCHAR(100),
-	@payment_method_name VARCHAR(100),
-	@short_description_name VARCHAR(100),
+	@payment_method VARCHAR(100),
+	@short_description VARCHAR(100),
 	@user VARCHAR(100))
 AS 
 BEGIN
 	-- GETTING CITY ID --
 	--Values that are not found in the cities table will be returned as nulls
-
 	DECLARE @city_id INT
 	SET @city_id = (
 		SELECT city_id
@@ -23,7 +22,7 @@ BEGIN
 	SET @payment_method_id = (
 		SELECT payment_method_id
 		FROM payment_methods
-		WHERE payment_method = @payment_method_name
+		WHERE payment_method = @payment_method
 	)
 
 	-- GETTING USER ID --
@@ -49,24 +48,27 @@ BEGIN
 	--GETTING SHORT DESCRIPTION ID
 	--Values not found in the short_descriptions table will be added to the short_descriptions table
 	--checking if the payment's short description is already registered
-	IF @short_description_name NOT IN (
+	IF @short_description NOT IN (
 		SELECT DISTINCT short_description
 		FROM short_descriptions
 	)
 	--If it does not exist, it will be added to the short_descriptions table
 	BEGIN
-		EXEC insert_short_description @short_description = @short_description_name
+		EXEC insert_short_description @short_description = @short_description
 	END
 	--getting the user_id given the @user variable from the users table
 	DECLARE @short_description_id INT
 	SET @short_description_id = (
 		SELECT short_description_id
 		FROM short_descriptions
-		WHERE short_description = @short_description_name
+		WHERE short_description = @short_description
 		)
 		UPDATE payments
 		SET value = @value, city_id = @city_id, payment_method_id = @payment_method_id, short_description_id = @short_description_id, user_id = @user_id
 		WHERE id = @id
+
+		INSERT INTO logtable (log_time, table_modified, modification_type, row_modified)
+		VALUES (GETDATE(), 'payments', 'UPDATE', @id)
 END;
 GO
 
@@ -98,6 +100,9 @@ BEGIN
 		UPDATE cities
 		SET city = @city, state_id = @state_id
 		WHERE city_id = @city_id
+
+		INSERT INTO logtable (log_time, table_modified, modification_type, row_modified)
+		VALUES (GETDATE(), 'cities', 'UPDATE', @city_id)
 	END
 
 END;
@@ -108,6 +113,9 @@ BEGIN
 	UPDATE states
 	SET country_state = @country_state
 	WHERE state_id = @state_id
+
+	INSERT INTO logtable (log_time, table_modified, modification_type, row_modified)
+	VALUES (GETDATE(), 'states', 'UPDATE', @state_id)
 END;
 GO
 
@@ -116,6 +124,9 @@ BEGIN
 	UPDATE payment_methods
 	SET payment_method = @payment_method
 	WHERE payment_method_id = @payment_method_id
+
+	INSERT INTO logtable (log_time, table_modified, modification_type, row_modified)
+	VALUES (GETDATE(), 'payment_methods', 'UPDATE', @payment_method_id)
 END;
 GO
 
@@ -124,6 +135,9 @@ BEGIN
 	UPDATE short_descriptions
 	SET short_description = @short_description
 	WHERE short_description_id = @short_description_id
+
+	INSERT INTO logtable (log_time, table_modified, modification_type, row_modified)
+	VALUES (GETDATE(), 'short_descriptions', 'UPDATE', @short_description_id)
 END;
 GO
 
@@ -132,5 +146,8 @@ BEGIN
 	UPDATE users
 	SET username = @username
 	WHERE user_id = @user_id
+
+	INSERT INTO logtable (log_time, table_modified, modification_type, row_modified)
+	VALUES (GETDATE(), 'users', 'UPDATE', @user_id)
 END;
 GO
