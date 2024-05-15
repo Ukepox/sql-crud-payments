@@ -37,8 +37,6 @@ The logtable captures when a table is created or modified, the type of modificat
 
 For every element of CRUD plus the INSERT there exit a corresponding .sql file that creates procedures for that functionality.
 
-Cuando se corre el procedimiento relacionado al DELETE se hace una alteración a una variable invisible llamada delted y no se despliega cuando se corre el procedimiento de lectura. Esto es un borrado lógico y se pueden seguir consultado estos registros pero solamente si se hacen consultas fuera del procedimiento read_table.
-
 When delete procedures are executed, the data is soft deleted in table. Every table has a 'deleted' field which by default is 0, when the delete procedure is executed this value is modified to 1 and respective rows with this value are not shown when executing the read_table procedure.
 
 The proedure are executed in the executions.sql file and if you want to know how each of them work you can read the respective .sql file to know how the proedure works.
